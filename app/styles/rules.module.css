@@ -1,0 +1,137 @@
+/* ─── GlobalForge: Pricing Rules List Styles ─── */
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.rule-card {
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.rule-card:hover {
+  border-color: #0891b2;
+  box-shadow: 0 2px 8px rgba(8, 145, 178, 0.1);
+  transform: translateY(-1px);
+}
+
+.rule-card__icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.rule-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rule-card__name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--p-color-text);
+  margin-bottom: 0.25rem;
+}
+
+.rule-card__meta {
+  font-size: 0.8rem;
+  color: var(--p-color-text-secondary);
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.rule-card__stats {
+  display: flex;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+.rule-card__stat {
+  text-align: center;
+}
+
+.rule-card__stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--p-color-text);
+}
+
+.rule-card__stat-label {
+  font-size: 0.7rem;
+  color: var(--p-color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Countries List ─── */
+.countries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.country-config-card {
+  background: var(--p-color-bg-surface);
+  border: 1px solid var(--p-color-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.country-config-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.country-config-card--disabled {
+  opacity: 0.6;
+}
+
+.country-config-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.country-config-card__name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.country-config-card__flag {
+  font-size: 1.35rem;
+}
+
+.country-config-card__details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.country-config-card__detail {
+  font-size: 0.8rem;
+}
+
+.country-config-card__detail-label {
+  color: var(--p-color-text-secondary);
+}
+
+.country-config-card__detail-value {
+  font-weight: 600;
+  color: var(--p-color-text);
+}

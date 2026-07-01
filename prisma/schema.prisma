@@ -1,34 +1,158 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// GlobalForge — Smart International Pricing & DDP Calculator
+// Prisma Schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
   provider = "sqlite"
   url      = "file:dev.sqlite"
 }
 
+// ─── Shopify Session (required by @shopify/shopify-app-session-storage-prisma) ───
+
 model Session {
-  id            String    @id
-  shop          String
-  state         String
-  isOnline      Boolean   @default(false)
-  scope         String?
-  expires       DateTime?
-  accessToken   String
-  userId        BigInt?
-  firstName     String?
-  lastName      String?
-  email         String?
-  accountOwner  Boolean   @default(false)
-  locale        String?
-  collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
+}
+
+// ─── GlobalForge: Shop Settings ───
+
+model Shop {
+  id              String   @id @default(cuid())
+  shopDomain      String   @unique
+  baseCurrency    String   @default("USD")
+  brandColor      String   @default("#0891B2") // Cyan
+  accentColor     String   @default("#6366F1") // Indigo
+  roundingMethod  String   @default("psychological") // "none" | "nearest" | "psychological"
+  showLandedPrice Boolean  @default(true)
+  dutyApiKey      String?  // External duty/tax API key
+  dutyApiProvider String?  // "zonos" | "avalara" | "manual"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  pricingRules    PricingRule[]
+  countryConfigs  CountryConfig[]
+  analytics       AnalyticsEvent[]
+}
+
+// ─── GlobalForge: Pricing Rules ───
+
+model PricingRule {
+  id       String @id @default(cuid())
+  shopId   String
+  shop     Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name     String
+  status   String @default("draft") // "draft" | "active" | "paused" | "archived"
+  priority Int    @default(0)
+
+  // Scope
+  scope           String  @default("all") // "all" | "products" | "collections" | "tags"
+  targetProducts  String? // JSON: product GIDs
+  targetCollections String? // JSON: collection GIDs
+  targetTags      String? // JSON: product tags
+
+  // Country targeting
+  countries       String? // JSON: array of ISO country codes, null = all
+  excludeCountries String? // JSON: array of excluded ISO country codes
+
+  // Price adjustment
+  adjustmentType  String  @default("percentage") // "percentage" | "fixed" | "multiplier"
+  adjustmentValue Float   @default(0)
+
+  // Duty & tax
+  includeDuty     Boolean @default(true)
+  includeVat      Boolean @default(true)
+  dutyRate        Float?  // Override duty rate (percentage)
+  vatRate         Float?  // Override VAT rate (percentage)
+
+  // Shipping
+  shippingCostType String? // "flat" | "weight_based" | "api"
+  shippingFlatRate  Float?
+
+  // Rounding
+  roundingMethod  String @default("psychological") // "none" | "nearest" | "psychological"
+
+  // Denormalized metrics
+  impressions Int   @default(0)
+  conversions Int   @default(0)
+  revenue     Float @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  analytics AnalyticsEvent[]
+
+  @@index([shopId, status])
+  @@index([shopId, scope])
+}
+
+// ─── GlobalForge: Country Configurations ───
+
+model CountryConfig {
+  id          String @id @default(cuid())
+  shopId      String
+  shop        Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  countryCode String // ISO 3166 alpha-2 (e.g., "US", "DE", "JP")
+  countryName String
+  enabled     Boolean @default(true)
+
+  // Currency
+  currency    String // ISO 4217 (e.g., "EUR", "GBP")
+  exchangeRate Float @default(1.0)
+
+  // Taxes & Duties
+  vatRate     Float  @default(0) // Standard VAT/GST rate
+  dutyRate    Float  @default(0) // Average duty rate
+  deMinimis   Float  @default(0) // De minimis threshold
+
+  // Shipping defaults
+  shippingZone    String? // Zone name or ID
+  baseShippingCost Float  @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shopId, countryCode])
+  @@index([shopId, enabled])
+}
+
+// ─── GlobalForge: Analytics Events ───
+
+model AnalyticsEvent {
+  id            String       @id @default(cuid())
+  shopId        String
+  shop          Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  pricingRuleId String?
+  pricingRule   PricingRule? @relation(fields: [pricingRuleId], references: [id], onDelete: SetNull)
+
+  eventType   String  // "impression" | "click" | "conversion" | "price_calc"
+  countryCode String? // Which country triggered this event
+  orderId     String? // Shopify order GID
+  revenue     Float?  // Revenue attributed
+  dutySaved   Float?  // Duty amount shown to customer
+  metadata    String? // JSON: extra event data
+
+  createdAt DateTime @default(now())
+
+  @@index([shopId, eventType, createdAt])
+  @@index([pricingRuleId, eventType])
+  @@index([shopId, countryCode])
 }
